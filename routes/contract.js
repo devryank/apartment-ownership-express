@@ -45,9 +45,21 @@ router.post('/createBuilding', async (req, res) => {
 
 router.get('/getUnitByBuilding', async (req, res) => {
     try {
-        const buildingId = req.body.buildingId;
-        const value = await contract.getUnitByBuilding(buildingId);
-        res.send({ value: value.toString() });
+        const buildingId = req.body.buildingId; // For GET, it's better to use `req.query` instead
+        const rawUnits = await contract.getUnitByBuilding(buildingId);
+
+        const units = rawUnits.map(u => ({
+            id: u[0],
+            owner: u[1],
+            floor: Number(u[2]), // or u[2].toString()
+            unitNumber: u[3],
+            unitStatus: Number(u[4]),
+            saleStatus: Number(u[5]),
+            createdBy: u[6],
+            createdAt: Number(u[7]) // convert BigInt timestamp
+        }));
+
+        res.send({ units });
     } catch (err) {
         console.error(err);
         res.status(500).send(err);
@@ -60,7 +72,7 @@ router.post('/createUnit', async (req, res) => {
         const id = uuidv4();
 
         const tx = await contract.createUnit(id, owner, floor, unitNumber, buildingId);
-        res.send({ value: value.toString() });
+        res.send({ success: true, txHash: tx.hash });
     } catch (err) {
         console.error(err);
         res.status(500).send(err);
@@ -73,7 +85,41 @@ router.post('/createUnitForSale', async (req, res) => {
 
         const tx = await contract.createUnitForSale(buildingId, unitId, price);
         await tx.wait();
-        res.send({ value: value.toString() });
+        res.send({ success: true, txHash: tx.hash });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err);
+    }
+})
+
+router.post('/requestBuy', async (req, res) => {
+    try {
+        const { buildingId, unitId } = req.body;
+        const id = uuidv4();
+
+        const tx = await contract.requestBuy(id, buildingId, unitId);
+        await tx.wait();
+        res.send({ success: true, txHash: tx.hash });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err);
+    }
+})
+
+router.get('/getBuyRequest', async (req, res) => {
+    try {
+        const { buildingId, unitId, owner } = req.body;
+        const rawRequests = await contract.getBuyRequest(buildingId, unitId, owner);
+
+        const requests = rawRequests.map(r => ({
+            id: r[0],
+            unitId: r[1],
+            requestedBy: r[2],
+            status: Number(r[3]),
+            createdAt: Number(r[4])
+        }));
+
+        res.send({ requests });
     } catch (err) {
         console.error(err);
         res.status(500).send(err);
