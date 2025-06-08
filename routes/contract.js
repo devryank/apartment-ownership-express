@@ -126,4 +126,41 @@ router.get('/getBuyRequest', async (req, res) => {
     }
 })
 
+router.post('/approveRequest', async (req, res) => {
+    try {
+        const { id, buildingId, unitId } = req.body;
+        const tx = await contract.approveRequest(id, buildingId, unitId);
+        await tx.wait();
+        res.send({ success: true, txHash: tx.hash });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err);
+    }
+})
+
+router.post('/rejectRequest', async (req, res) => {
+    try {
+        const { id, buildingId, unitId } = req.body;
+        const tx = await contract.rejectRequest(id, buildingId, unitId);
+        await tx.wait();
+        res.send({ success: true, txHash: tx.hash });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err);
+    }
+});
+
+router.post('/transferUnitOwnership', async (req, res) => {
+    try {
+        const { buildingId, unitId } = req.body;
+        const senderAddress = req.body.sender;
+        const tx = await contract.transferUnitOwnership(buildingId, unitId);
+        await tx.wait();
+        res.send({ success: true, txHash: tx.hash });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(err);
+    }
+});
+
 module.exports = router;
