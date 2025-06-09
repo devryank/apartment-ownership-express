@@ -152,9 +152,11 @@ router.post('/rejectRequest', async (req, res) => {
 
 router.post('/transferUnitOwnership', async (req, res) => {
     try {
-        const { buildingId, unitId } = req.body;
-        const senderAddress = req.body.sender;
-        const tx = await contract.transferUnitOwnership(buildingId, unitId);
+        const { buildingId, unitId, price, sender } = req.body;
+        const tx = await contract.transferUnitOwnership(buildingId, unitId, {
+            value: ethers.parseEther(price),
+            sender: sender,
+        });
         await tx.wait();
         res.send({ success: true, txHash: tx.hash });
     } catch (err) {
