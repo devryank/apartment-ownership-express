@@ -19,10 +19,19 @@ router.get('/balance', async (req, res) => {
 });
 
 // Read data from contract
-router.get('/getAllBuilding', async (req, res) => {
+router.get('/getAllBuildings', async (req, res) => {
     try {
-        const value = await contract.getAllBuilding();
-        res.send({ value: value.toString() });
+        const rawBuildings = await contract.getAllBuilding();
+
+        const buildings = rawBuildings.map(u => ({
+            id: u[0],
+            name: u[1],
+            location: u[2],
+            createdBy: u[3],
+            createdAt: Number(u[4])
+        }));
+
+        res.send({ buildings });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error reading value from contract');
@@ -45,7 +54,7 @@ router.post('/createBuilding', async (req, res) => {
 
 router.get('/getUnitByBuilding', async (req, res) => {
     try {
-        const buildingId = req.body.buildingId; // For GET, it's better to use `req.query` instead
+        const buildingId = req.query.buildingId; // For GET, it's better to use `req.query` instead
         const rawUnits = await contract.getUnitByBuilding(buildingId);
 
         const units = rawUnits.map(u => ({
